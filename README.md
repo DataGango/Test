@@ -1,25 +1,44 @@
 # Test
 
-## Robotic agent
+## Robotic coding agent
 
-`robot_agent` is a small grid-world robot that executes a plan **step by step**.
+`robot_agent` is an agent that writes code for you in **Python, C, Java or TypeScript**, working through fixed steps:
 
-- **World** (`robot_agent/world.py`): a grid with obstacles and items, plus the robot's position, heading and held item.
-- **Steps** (`robot_agent/steps.py`): primitive actions (`Move`, `Turn("left"|"right")`, `Pick`, `Drop`). Each checks its preconditions before changing state.
-- **Planner** (`robot_agent/planner.py`): BFS path planning, turned into steps; `plan_delivery` builds a fetch-and-deliver plan.
-- **Agent** (`robot_agent/agent.py`): `RobotAgent` runs steps one at a time, records a `StepResult` for each, and stops at the first failure.
+1. **plan**: Claude breaks the task into implementation steps
+2. **write**: Claude writes one complete source file that follows the plan
+3. **check**: the file is compiled or syntax-checked locally (`python3 -m py_compile`, `gcc -fsyntax-only`, `javac`, `tsc --noEmit --strict`)
+4. **fix**: if the check fails, the compiler errors go back to Claude for a rewrite (steps 3–4 repeat up to `--max-fixes` times)
+5. **save**: the final file is written to the output directory
 
-```python
-from robot_agent import RobotAgent, World, Move, Turn, Pick
+### Setup
 
-# Run explicit steps
-agent = RobotAgent(World(5, 5, items={(1, 0): "box"}))
-agent.run([Move(), Pick(), Turn("right"), Move()])
-
-# Or let the planner build the steps
-agent = RobotAgent(World(5, 5, items={(1, 0): "box"}))
-agent.deliver("box", (4, 4))
+```bash
+pip install -r requirements.txt
+export ANTHROPIC_API_KEY=...        # or `ant auth login`
 ```
 
-Run the demo: `python -m robot_agent`
-Run the tests: `python -m unittest`
+### Usage
+
+```bash
+python -m robot_agent --lang python "a CLI that counts word frequencies in a file"
+python -m robot_agent --lang c "print the first 20 prime numbers"
+python -m robot_agent --lang java "a bank account class with deposit/withdraw and a demo main"
+python -m robot_agent --lang typescript "a function that deep-merges two objects, with examples"
+```
+
+Options: `-o/--out DIR` (default `output/`), `--max-fixes N` (default 3), `--model` (default `claude-opus-5`).
+
+From Python:
+
+```python
+from robot_agent import ClaudeCodeWriter, CodingAgent
+
+result = CodingAgent(ClaudeCodeWriter(), output_dir="output").run("fizzbuzz to 100", "c")
+print(result.ok, result.path)
+```
+
+The check step skips any language whose compiler isn't installed.
+
+### Tests
+
+`python -m unittest`. The tests use a fake writer, so they need no API key.
