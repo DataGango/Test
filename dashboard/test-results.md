@@ -6,6 +6,8 @@
 - **Result:** PASS
 - **Tests:** 6 run, 6 passed
 - **Skipped:** 1 TypeScript compiler check because `tsc` is not installed
+- **Pipeline:** `.github/workflows/regression.yml`
+- **Local regression run:** `python3 -m unittest -v` passed
 
 ## Test Cases
 
